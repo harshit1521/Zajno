@@ -3,7 +3,15 @@ import camImg from "./assets/cam.png";
 import brosImg from "./assets/man.png";
 import { projects } from "./components/list";
 import WorkList from "./components/list";
+import { useEffect, useState } from "react";
+import Lenis from "lenis";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Preloader from "./components/Preloader";
+import { usePreloader } from "./hooks/usePreloader";
 
+
+gsap.registerPlugin(ScrollTrigger);
 const mainLinks = [
   { label: "work", href: "/work" },
   { label: "studio", href: "/studio" },
@@ -15,9 +23,51 @@ const socialLinks = [
   { label: "instagram", href: "https://www.instagram.com/zajno" },
 ];
 
+const imagesToPreload = [
+  camImg,
+  brosImg,
+  ...projects.map(({ image }) => image),
+  "/logo.svg",
+];
+
 export default function App() {
+
+  const { progress, done, failedImages } = usePreloader(imagesToPreload, 600);
+  const [removed, setRemoved] = useState(false);
+
+  // unmount the overlay after the fade-out finishes
+  useEffect(() => {
+    if (done) {
+      const t = setTimeout(() => setRemoved(true), 700); // match duration-700
+      return () => clearTimeout(t);
+    }
+  }, [done]);
+
+
+    useEffect(() => {
+    const lenis = new Lenis({
+      lerp: 0.1,
+      smoothWheel: true,
+    });
+
+    lenis.on("scroll", ScrollTrigger.update);
+
+    const update = (time: number) => {
+      lenis.raf(time * 1000);
+    };
+
+    gsap.ticker.add(update);
+    gsap.ticker.lagSmoothing(0);
+
+    return () => {
+      gsap.ticker.remove(update);
+      lenis.destroy();
+    };
+  }, []);
+
   return (
     <>
+    {!removed && <Preloader progress={progress} hidden={done} failedImages={failedImages} />}
       <main className="relative min-h-screen overflow-x-clip bg-[#ebebeb] px-[clamp(0.75rem,1.05vw,1.5rem)] pb-6 text-[#1a1a1a]">
         <nav
           id="n"
@@ -32,14 +82,17 @@ export default function App() {
           <ul>
             {mainLinks.map((l) => (
               <li key={l.label}>
-                <a href={l.href}>{l.label}</a>
+                <a 
+                href={l.href}
+                className="nav-hover-btn"
+                >{l.label}</a>
               </li>
             ))}
           </ul>
           <ul>
             {socialLinks.map((l) => (
               <li key={l.label}>
-                <a href={l.href} target="_blank" rel="noreferrer">
+                <a href={l.href} target="_blank" rel="noreferrer" className="nav-hover-btn">
                   {l.label}
                 </a>
               </li>
@@ -167,21 +220,21 @@ export default function App() {
             />
           </div>
 
-          <div className="col-start-5 self-start border-l border-[#1a1a1a] pl-[1vw]">
-            <div className="text-[1.5vw] font-bold leading-[1.1] tracking-tight text-[#1a1a1a]">
+          <div className="col-start-5 self-start border-l border-[#1a1a1a] pl-[1vw] pb-8">
+            <div className="text-[1.5vw] font-bold leading-[0.9] tracking-tight text-[#1a1a1a]">
               <h4 className="mb-[1.5vw]">Services:</h4>
               <ul className="flex flex-col gap-[0.25vw] ">
-                <li className="hover:text-[#ff3928] transition-colors duration-300 cursor-pointer">Branding</li>
-                <li className="hover:text-[#ff3928] transition-colors duration-300 cursor-pointer">Web Design</li>
-                <li className="hover:text-[#ff3928] transition-colors duration-300 cursor-pointer">Web Development</li>
-                <li className="hover:text-[#ff3928] transition-colors duration-300 cursor-pointer">Motion Graphics</li>
-                <li className="hover:text-[#ff3928] transition-colors duration-300 cursor-pointer">3D Illustration</li>
+                <li className="hover:text-[#ff3928] transition-colors duration-400 cursor-pointer">Branding</li>
+                <li className="hover:text-[#ff3928] transition-colors duration-400 cursor-pointer">Web Design</li>
+                <li className="hover:text-[#ff3928] transition-colors duration-400 cursor-pointer">Web Development</li>
+                <li className="hover:text-[#ff3928] transition-colors duration-400 cursor-pointer">Motion Graphics</li>
+                <li className="hover:text-[#ff3928] transition-colors duration-400 cursor-pointer">3D Illustration</li>
               </ul>
             </div>
           </div>
 
-          <div className="col-start-6 self-start border-l border-[#1a1a1a] pl-[1vw]">
-            <div className="text-[1.5vw] font-bold leading-[1.1] tracking-tight text-[#1a1a1a]">
+          <div className="col-start-6 self-start border-l border-[#1a1a1a] pl-[1vw] pb-8">
+            <div className="text-[1.5vw] font-bold leading-[0.9] tracking-tight text-[#1a1a1a]">
               <h4 className="mb-[1.5vw]">Stats:</h4>
               <ul className="flex flex-col gap-[0.25vw]">
                 <li>Founded 2015</li>
@@ -226,28 +279,28 @@ export default function App() {
 
       <footer className="mb-[4vw] border-t border-black pt-16 mx-4 grid grid-col-[1fr_1fr]">
         <div className="flex  h-[16vw] justify-start items-start  col-start-1">
-          <img src="../../public/logo.svg" alt="" className="w-[9vw]" />
+          <img src="/logo.svg" alt="" className="w-[9vw]" />
 
         </div>
         <div className="col-start-2 w-full grid grid-col-[1fr_1fr] text-3xl">
           <div className="grid grid-col-[1fr_1fr] gap-x-[1.04vw] col-start-1">
             <div className="col-start-1 border-l border-black pl-[1vw]">
               <ul>
-                <li>Work</li>
-                <li>Studio</li>
-                <li>Contact</li>
+                <li><span className="nav-hover-btn">Work</span></li>
+                <li><span className="nav-hover-btn">Studio</span></li>
+                <li><span className="nav-hover-btn">Contact</span></li>
               </ul>
               <br />
               <p>©zajno 2026</p>
             </div>
             <div className="col-start-2 border-l border-black pl-[1vw]">
               <ul>
-                <li>Instagram</li>
-                <li>Twitter</li>
-                <li>Linkedin</li>
-                <li>Clutch</li>
-                <li>Dribble</li>
-                <li>Behance</li>
+                <li><span className="nav-hover-btn">Instagram</span></li>
+                <li><span className="nav-hover-btn">Twitter</span></li>
+                <li><span className="nav-hover-btn">Linkedin</span></li>
+                <li><span className="nav-hover-btn">Clutch</span></li>
+                <li><span className="nav-hover-btn">Dribble</span></li>
+                <li><span className="nav-hover-btn">Behance</span></li>
               </ul>
             </div>
           </div>
